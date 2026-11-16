@@ -1,0 +1,215 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
+import { createClient } from '../../lib/supabase';
+import { Avatar } from '../../components/avatar';
+import { VerifiedName } from '../../components/verified-name';
+
+export default function Messages() {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [pageError, setPageError] = useState('');
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+    let channel: any;
+    let verificationChannel: any;
+    const channelSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let loadingRequest = false;
+
+    const load = async (user: any) => {
+      if (!mounted || loadingRequest) return;
+      loadingRequest = true;
+
+      try {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('*')
+          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .order('updated_at', { ascending: false });
+
+        if (error) {
+          console.error('CARTOMUX messages: conversations query failed', error);
+          if (mounted) {
+            setPageError('We could not load your conversations right now. Please try again.');
+            setLoading(false);
+          }
+          return;
+        }
+
+        const conversations = data || [];
+        const otherIds = Array.from(new Set(
+          conversations
+            .map((conversation: any) => conversation.buyer_id === user.id ? conversation.seller_id : conversation.buyer_id)
+            .filter(Boolean)
+        ));
+
+        let verifiedIds = new Set<string>();
+        if (otherIds.length) {
+          const { data: verifications, error: verificationError } = await supabase
+            .from('student_verifications')
+            .select('user_id')
+            .in('user_id', otherIds)
+            .eq('status', 'approved');
+
+          if (verificationError) {
+            console.warn('CARTOMUX messages: verification lookup failed', verificationError.message);
+          } else {
+            verifiedIds = new Set((verifications || []).map((row: any) => row.user_id));
+          }
+        }
+
+        const enriched: any[] = [];
+
+        for (const conversation of conversations) {
+          if (!conversation?.id) continue;
+
+          const otherId = conversation.buyer_id === user.id
+            ? conversation.seller_id
+            : conversation.buyer_id;
+
+          try {
+            const [listingResult, profileResult, lastMessageResult] = await Promise.all([
+              conversation.listing_id
+                ? supabase.from('listings').select('title').eq('id', conversation.listing_id).maybeSingle()
+                : Promise.resolve({ data: null, error: null } as any),
+              otherId
+                ? supabase.from('profiles').select('id,full_name,avatar_url').eq('id', otherId).maybeSingle()
+                : Promise.resolve({ data: null, error: null } as any),
+              supabase.from('messages')
+                .select('body,attachment_name,created_at,sender_id,read_at')
+                .eq('conversation_id', conversation.id)
+                .order('created_at', { ascending: false })
+                .limit(1),
+            ]);
+
+            if (listingResult.error) console.warn('CARTOMUX messages: listing lookup failed', conversation.id, listingResult.error.message);
+            if (profileResult.error) console.warn('CARTOMUX messages: profile lookup failed', conversation.id, profileResult.error.message);
+            if (lastMessageResult.error) console.warn('CARTOMUX messages: latest message lookup failed', conversation.id, lastMessageResult.error.message);
+
+            enriched.push({
+              ...conversation,
+              listing: listingResult.data || null,
+              profile: profileResult.data || null,
+              lastMessage: Array.isArray(lastMessageResult.data) ? lastMessageResult.data[0] || null : lastMessageResult.data || null,
+              verified: verifiedIds.has(otherId),
+            });
+          } catch (conversationError) {
+            console.warn('CARTOMUX messages: conversation enrichment failed', conversation.id, conversationError);
+            enriched.push({
+              ...conversation,
+              listing: null,
+              profile: null,
+              lastMessage: null,
+              verified: verifiedIds.has(otherId),
+            });
+          }
+        }
+
+        if (mounted) {
+          setItems(enriched);
+          setPageError('');
+          setLoading(false);
+        }
+      } catch (loadError) {
+        console.error('CARTOMUX messages: unexpected load failure', loadError);
+        if (mounted) {
+          setPageError('We could not load your messages right now. Please try again.');
+          setLoading(false);
+        }
+      } finally {
+        loadingRequest = false;
+      }
+    };
+
+    (async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) console.warn('CARTOMUX messages: auth lookup failed', authError.message);
+        if (!user) {
+          window.location.assign('/auth/login?next=/messages');
+          return;
+        }
+        if (!mounted) return;
+
+        setCurrentUser(user);
+        await load(user);
+
+        channel = supabase.channel(`messages-list-${user.id}-${channelSuffix}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => { void load(user); })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => { void load(user); })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => { void load(user); })
+          .subscribe((status) => {
+            if (status === 'CHANNEL_ERROR') console.warn('CARTOMUX messages: realtime channel error');
+          });
+
+        verificationChannel = supabase.channel(`messages-verifications-${user.id}-${channelSuffix}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'student_verifications' }, () => { void load(user); })
+          .subscribe((status) => {
+            if (status === 'CHANNEL_ERROR') console.warn('CARTOMUX messages: verification realtime channel error');
+          });
+      } catch (error) {
+        console.error('CARTOMUX messages: page initialisation failed', error);
+        if (mounted) {
+          setPageError('We could not open Messages right now. Please try again.');
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      if (channel) supabase.removeChannel(channel);
+      if (verificationChannel) supabase.removeChannel(verificationChannel);
+    };
+  }, []);
+
+  return (
+    <main className="section">
+      <div className="container messagesPage">
+        <div className="eyebrow">Inbox</div>
+        <h1>Messages</h1>
+        {pageError && (
+          <div className="notice" style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 10 }}>{pageError}</div>
+            <button className="btn green" onClick={() => window.location.reload()}>Try again</button>
+          </div>
+        )}
+        {loading ? (
+          <div className="panel empty"><span className="skeleton skeletonLine" /><span className="skeleton skeletonLine medium" /></div>
+        ) : !items.length ? (
+          <div className="empty">
+            <MessageCircle size={30} />
+            <p>No conversations yet.</p>
+            <Link className="btn green" href="/marketplace">Find something to chat about</Link>
+          </div>
+        ) : (
+          <div className="inboxList">
+            {items.map((c) => {
+              const name = c.profile?.full_name || 'CARTOMUX student';
+              const preview = c.lastMessage?.body || (c.lastMessage?.attachment_name ? 'Photo' : 'Start a conversation');
+              const otherId = c.buyer_id === currentUser?.id ? c.seller_id : c.buyer_id;
+              return (
+                <Link className="inboxItem" href={`/messages/${c.id}`} key={c.id}>
+                  <Avatar url={c.profile?.avatar_url} name={name} size="md" />
+                  <div className="inboxCopy">
+                    <div className="inboxTop">
+                      <VerifiedName userId={otherId} name={name} verified={c.verified} />
+                      <span className="muted">{c.lastMessage?.created_at ? new Date(c.lastMessage.created_at).toLocaleDateString() : ''}</span>
+                    </div>
+                    <div className="muted inboxPreview">{preview}</div>
+                    <div className="inboxListing">{c.listing?.title || 'CARTOMUX conversation'}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}

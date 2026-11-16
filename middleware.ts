@@ -1,0 +1,50 @@
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+const protectedMatchers = ['/sell','/profile','/settings','/favourites','/messages','/notifications','/my-listings','/admin','/advertise/book','/advertise/my-ads'];
+const isProtected = (path: string) => protectedMatchers.some(route => path === route || path.startsWith(`${route}/`));
+
+export async function middleware(request: NextRequest) {
+  if (!isProtected(request.nextUrl.pathname)) return NextResponse.next();
+
+  let response = NextResponse.next({ request });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        },
+      },
+    },
+  );
+
+  // getUser() validates the session with Supabase Auth and also refreshes
+  // expiring sessions through the SSR cookie exchange.
+  const { data: { user }, error } = await supabase.auth.getUser();
+  response.headers.set('Cache-Control', 'private, no-store');
+
+  if (error || !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/login';
+    url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(url);
+  }
+
+  if (request.nextUrl.pathname === '/admin' || request.nextUrl.pathname.startsWith('/admin/')) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    if (profile?.role !== 'admin') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/profile';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+  }
+  return response;
+}
+
+export const config = { matcher: ['/sell/:path*','/profile/:path*','/settings/:path*','/favourites/:path*','/messages/:path*','/notifications/:path*','/my-listings/:path*','/admin/:path*','/advertise/book/:path*','/advertise/my-ads/:path*'] };

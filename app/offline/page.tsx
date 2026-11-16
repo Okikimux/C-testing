@@ -1,0 +1,4 @@
+'use client';
+import Link from 'next/link';
+import { WifiOff, RotateCw } from 'lucide-react';
+export default function OfflinePage(){return <main className="offlinePage"><section className="offlineCard"><img className="offlineLogo" src="/campora-app-icon.png" alt="CARTOMUX"/><div className="offlineSymbol"><WifiOff size={30}/></div><div className="eyebrow">Connection interrupted</div><h1>You’re offline</h1><p className="muted" style={{fontSize:15,lineHeight:1.65}}>CARTOMUX needs an internet connection for live listings, messages, account verification and submissions. Reconnect and try again.</p><div className="actionsRow" style={{justifyContent:'center',marginTop:20}}><button className="btn green" onClick={()=>window.location.reload()}><RotateCw size={16}/> Try again</button><Link className="btn light" href="/">Go to home</Link></div></section></main>}

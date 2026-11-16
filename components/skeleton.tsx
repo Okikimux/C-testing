@@ -1,0 +1,2 @@
+export function Skeleton({ className = '' }: { className?: string }) { return <span className={`skeleton ${className}`} aria-hidden="true" />; }
+export function CardSkeleton() { return <div className="card skeletonCard"><Skeleton className="skeletonPic"/><div className="cardbody"><Skeleton className="skeletonLine short"/><Skeleton className="skeletonLine"/><Skeleton className="skeletonLine medium"/></div></div>; }
