@@ -3,6 +3,7 @@
 CARTOMUX is a mobile-first student marketplace, an innovation by **MUXLAB**.
 
 ## What changed
+- New seller listing photos receive a subtle CARTOMUX logo + wordmark watermark in the existing Bricolage Grotesque display font before upload.
 - Integrated the user's supplied CampusDrop logo and recoloured its blue/green artwork to the CampusDrop navy/green palette.
 - Mobile navigation is now **Home / Marketplace / Sell / Messages / Notifications**.
 - Profile is no longer in the bottom navigation; the signed-in user's avatar opens the account menu in the header.
