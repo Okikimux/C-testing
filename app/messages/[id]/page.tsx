@@ -5,7 +5,7 @@ import { friendlyError } from '../../../lib/friendly-error';
 import { useFlash } from '../../../components/toast';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Check, CheckCheck, ImagePlus, Info, MoreVertical, Paperclip, Pencil, Send, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Check, CheckCheck, ImagePlus, Info, MoreVertical, Paperclip, Pencil, Send, ShieldAlert, Trash2, X } from 'lucide-react';
 import { createClient } from '../../../lib/supabase';
 import { Avatar } from '../../../components/avatar';
 import { VerifiedName } from '../../../components/verified-name';
@@ -297,7 +297,7 @@ export default function Chat() {
         </div>
 
         {attachmentPreview && <div className="attachmentPreview"><img src={attachmentPreview} alt="Selected attachment preview"/><button onClick={clearAttachment} aria-label="Remove attachment"><X size={17}/></button></div>}
-        {scamSignal && <div className="chatSafetyWarning" role="status"><b>Stay safe on CARTOMUX</b><span>Be careful with requests to transfer money before inspecting an item or accommodation. Never share your OTP, PIN or password. Meet in a safe public place and verify what you are buying.</span></div>}
+        {scamSignal && <div className="chatSafetyWarning" role="status"><ShieldAlert size={19}/><div><b>Stay safe on CARTOMUX</b><span>Be careful with requests to transfer money before inspecting an item or accommodation. Never share your OTP, PIN or password. Meet in a safe public place and verify what you are buying.</span></div></div>}
         <form className="whatsappComposer" onSubmit={send}>
           <label className="attachButton" aria-label="Send image"><Paperclip size={20}/><input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic" onChange={(e) => chooseAttachment(e.target.files?.[0] || null)} hidden /></label>
           <input value={body} onChange={(e) => setBody(e.target.value)} maxLength={2000} placeholder="Message" aria-label="Message" />

@@ -2,10 +2,15 @@
 import { BackButton } from '../../components/back-button';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, MessageCircle, Package, Settings, LogOut, MapPin, BadgeCheck, BarChart3, Store, CalendarDays, Receipt, CalendarClock } from 'lucide-react';
+import { Heart, MessageCircle, Package, Settings, LogOut, MapPin, BadgeCheck, BarChart3, Store, CalendarDays, Receipt, CalendarClock, ChevronRight } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { createClient } from '../../lib/supabase';
 import { Avatar } from '../../components/avatar';
 import { VerifiedName } from '../../components/verified-name';
+
+function Tile({href,icon,title,text}:{href:string;icon:ReactNode;title:string;text:string}){
+  return <Link className="hubTile" href={href}><span className="hubTileIcon">{icon}</span><span className="hubTileBody"><b>{title}</b><span>{text}</span></span><ChevronRight className="hubTileGo" size={18}/></Link>;
+}
 
 export default function Profile(){
   const [profile,setProfile]=useState<any>(null); const [count,setCount]=useState(0); const [verified,setVerified]=useState(false);
@@ -25,5 +30,33 @@ export default function Profile(){
     return()=>{mounted=false;if(profileChannel)s.removeChannel(profileChannel);if(listingChannel)s.removeChannel(listingChannel);if(verificationChannel)s.removeChannel(verificationChannel)};
   },[]);
   async function signout(){await createClient().auth.signOut({ scope: 'local' });window.location.assign('/')}
-  return <main className="section"><BackButton /><div className="container">{!profile?<div className="empty">Loading profile...</div>:<><div className="profileHero panel"><div className="profileRow"><div className="row"><Avatar url={profile.avatar_url} name={profile.full_name} size="lg"/><div><h1 style={{margin:'0 0 5px'}}><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1><div className="muted">{profile.campus||'Campus not set'}</div>{profile.location&&<div className="profilePublicMeta"><MapPin size={14}/>{profile.location}</div>}</div></div><div className="actionsRow"><Link className="btn light" href="/verification"><BadgeCheck size={17}/> Verification</Link><Link className="btn light" href="/settings"><Settings size={17}/> Settings</Link><button className="btn danger" onClick={signout}><LogOut size={17}/> Sign out</button></div></div></div><div className="grid profileTiles" style={{marginTop:16}}><Link className="panel" href="/my-listings"><Package/><h3>My listings</h3><p className="muted">{count} active listing{count===1?'':'s'}</p></Link><Link className="panel" href="/favourites"><Heart/><h3>Favourites</h3><p className="muted">Saved items</p></Link><Link className="panel" href="/messages"><MessageCircle/><h3>Messages</h3><p className="muted">Chat with buyers and sellers</p></Link><Link className="panel" href="/transactions"><Receipt/><h3>Transactions</h3><p className="muted">Confirm purchases and leave reviews</p></Link><Link className="panel" href="/seller-analytics"><BarChart3/><h3>Seller analytics</h3><p className="muted">Views, inquiries and favourites</p></Link><Link className="panel" href="/viewing-requests"><CalendarDays/><h3>Accommodation viewings</h3><p className="muted">Manage inspection requests</p></Link><Link className="panel" href="/service-requests"><CalendarClock/><h3>Service requests</h3><p className="muted">Manage service bookings</p></Link><Link className="panel" href="/store/manage"><Store/><h3>My storefront</h3><p className="muted">Create a shareable vendor shop</p></Link></div></>}</div></main>
+  return <main className="section"><BackButton /><div className="container">{!profile?<div className="empty">Loading profile...</div>:<>
+    <section className="panel hubHero">
+      <div className="hubBanner" aria-hidden="true"/>
+      <div className="hubHeroBody">
+        <div className="hubIdent">
+          <Avatar url={profile.avatar_url} name={profile.full_name} size="lg"/>
+          <div className="hubIdentCopy"><h1><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1><div className="muted">{profile.campus||'Campus not set'}</div>{profile.location&&<div className="profilePublicMeta"><MapPin size={14}/>{profile.location}</div>}</div>
+        </div>
+        <div className="hubActions"><Link className="btn light" href="/verification"><BadgeCheck size={17}/> Verification</Link><Link className="btn light" href="/settings"><Settings size={17}/> Settings</Link><button className="btn danger" onClick={signout}><LogOut size={17}/> Sign out</button></div>
+      </div>
+    </section>
+
+    <section className="hubGroup" aria-labelledby="hub-buy-sell"><div className="hubGroupHead"><h2 id="hub-buy-sell">Buying &amp; selling</h2></div><div className="hubGrid">
+      <Tile href="/my-listings" icon={<Package size={22}/>} title="My listings" text={`${count} active listing${count===1?'':'s'}`}/>
+      <Tile href="/favourites" icon={<Heart size={22}/>} title="Favourites" text="Saved items"/>
+      <Tile href="/messages" icon={<MessageCircle size={22}/>} title="Messages" text="Chat with buyers and sellers"/>
+      <Tile href="/transactions" icon={<Receipt size={22}/>} title="Transactions" text="Confirm purchases and leave reviews"/>
+    </div></section>
+
+    <section className="hubGroup" aria-labelledby="hub-seller"><div className="hubGroupHead"><h2 id="hub-seller">Seller tools</h2></div><div className="hubGrid">
+      <Tile href="/seller-analytics" icon={<BarChart3 size={22}/>} title="Seller analytics" text="Views, inquiries and favourites"/>
+      <Tile href="/store/manage" icon={<Store size={22}/>} title="My storefront" text="Create a shareable vendor shop"/>
+    </div></section>
+
+    <section className="hubGroup" aria-labelledby="hub-campus"><div className="hubGroupHead"><h2 id="hub-campus">Campus services</h2></div><div className="hubGrid">
+      <Tile href="/viewing-requests" icon={<CalendarDays size={22}/>} title="Accommodation viewings" text="Manage inspection requests"/>
+      <Tile href="/service-requests" icon={<CalendarClock size={22}/>} title="Service requests" text="Manage service bookings"/>
+    </div></section>
+  </>}</div></main>
 }

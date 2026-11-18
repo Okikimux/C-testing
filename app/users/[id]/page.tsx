@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Package, MapPin, Star, Store } from 'lucide-react';
+import { EmptyState } from '../../../components/ui-bits';
 import { useParams } from 'next/navigation';
 import { createClient } from '../../../lib/supabase';
 import { Avatar } from '../../../components/avatar';
@@ -49,27 +50,33 @@ export default function PublicUserProfile() {
   if (loading) return <main className="section"><div className="container"><div className="skeletonBlock"><span className="skeleton skeletonAvatar"/><span className="skeleton skeletonLine"/><span className="skeleton skeletonLine medium"/></div></div></main>;
   if (error || !profile) return <main className="section"><div className="container"><div className="empty">{error || 'Profile not found.'}</div></div></main>;
 
+  const stars=(n:number)=><span className="starRow" aria-label={`${n} out of 5`}>{[1,2,3,4,5].map(i=><Star key={i} size={15} fill="currentColor" className={i<=n?'':'off'}/>)}</span>;
   return (
     <main className="section">
       <div className="container publicProfile">
         <Link href="/marketplace" className="productBack"><ArrowLeft size={17}/> Back to marketplace</Link>
-        <div className="panel publicProfileHero">
-          <div className="row">
-            <Avatar url={profile.avatar_url} name={profile.full_name || 'Student'} size="lg" />
-            <div>
-              <h1><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1>
-              <p className="muted">{profile.campus || 'Campus not set'}</p>
-              {profile.location && <p className="profilePublicMeta"><MapPin size={15}/> {profile.location}</p>}
+        <section className="panel hubHero">
+          <div className="hubBanner" aria-hidden="true"/>
+          <div className="hubHeroBody">
+            <div className="hubIdent">
+              <Avatar url={profile.avatar_url} name={profile.full_name || 'Student'} size="lg" />
+              <div className="hubIdentCopy">
+                <h1><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1>
+                <p className="muted">{profile.campus || 'Campus not set'}</p>
+                {profile.location && <p className="profilePublicMeta"><MapPin size={15}/> {profile.location}</p>}
+              </div>
             </div>
+            {storeSlug&&<div className="hubActions"><Link className="btn light" href={`/store/${storeSlug}`}><Store size={16}/> Visit storefront</Link></div>}
           </div>
-          <div className="publicProfileMeta">
-            <Package size={16}/> {listings.length} active listing{listings.length === 1 ? '' : 's'}
-            {reviewStats.count>0&&<span className="profileRating"><Star size={15} fill="currentColor"/> {reviewStats.average.toFixed(1)} ({reviewStats.count} reviews)</span>}<span className="muted">{reviewStats.completed} completed trade{reviewStats.completed===1?'':'s'}</span>
-            {storeSlug&&<Link className="btn light" href={`/store/${storeSlug}`}><Store size={15}/> Visit storefront</Link>}
+          <div className="statStrip">
+            <div><b>{listings.length}</b><span>Active listing{listings.length === 1 ? '' : 's'}</span></div>
+            <div><b>{reviewStats.count>0?<><Star size={17} fill="currentColor"/>{reviewStats.average.toFixed(1)}</>:'–'}</b><span>Average rating</span></div>
+            <div><b>{reviewStats.count}</b><span>Verified review{reviewStats.count===1?'':'s'}</span></div>
+            <div><b>{reviewStats.completed}</b><span>Completed trade{reviewStats.completed===1?'':'s'}</span></div>
           </div>
-        </div>
+        </section>
 
-        {reviewsList.length>0&&<section className="sellerReviewsSection"><div className="sectionHead"><h2>Buyer reviews</h2><span className="muted">Verified transactions only</span></div><div className="sellerReviewsGrid">{reviewsList.map((review:any)=><div className="panel sellerReviewCard" key={review.buyer_id+'-'+review.created_at}><div className="row"><b>{review.buyerName}</b><span className="profileRating">★ {review.rating}/5</span></div>{review.review&&<p>{review.review}</p>}<small className="muted">{new Date(review.created_at).toLocaleDateString()}</small></div>)}</div></section>}
+        {reviewsList.length>0&&<section className="sellerReviewsSection" style={{marginTop:32}}><div className="sectionHead"><h2>Buyer reviews</h2><span className="muted">Verified transactions only</span></div><div className="reviewGrid">{reviewsList.map((review:any)=><article className="reviewCard" key={review.buyer_id+'-'+review.created_at}><div className="reviewTop"><span className="reviewerDot" aria-hidden="true">{String(review.buyerName||'B').charAt(0).toUpperCase()}</span><div><b>{review.buyerName}</b><small>{new Date(review.created_at).toLocaleDateString()}</small></div></div>{stars(Number(review.rating)||0)}{review.review&&<p>{review.review}</p>}</article>)}</div></section>}
 
         <div className="sectionHead" style={{ marginTop: 36 }}>
           <h2>Active listings</h2>
@@ -88,7 +95,7 @@ export default function PublicUserProfile() {
               </Link>;
             })}
           </div>
-        ) : <div className="empty">This user has no active listings.</div>}
+        ) : <EmptyState icon={<Package size={26}/>} title="No active listings" text="This user has no active listings right now." />}
       </div>
     </main>
   );
