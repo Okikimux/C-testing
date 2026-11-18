@@ -352,14 +352,15 @@ a.card:hover h3 { color: var(--green-deep); }
 /* 8 · Product detail -------------------------------------------------------- */
 .product { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: start; }
 .productGallery { position: sticky; top: calc(var(--nav-h) + 24px); min-width: 0; }
-.productImage { aspect-ratio: 1 / 1; max-height: 640px; width: 100%; border-radius: 24px; background: var(--media-bg) center / cover no-repeat; }
+.productImage { aspect-ratio: 1 / 1; width: 100%; max-width: 640px; border-radius: 24px; background: var(--media-bg) center / cover no-repeat; }
 .productCarousel { position: relative; overflow: hidden; touch-action: pan-y; }
 .carouselArrow { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--glass); color: var(--heading); font-size: 28px; line-height: 1; padding-bottom: 3px; cursor: pointer; box-shadow: 0 4px 14px rgba(11,44,77,.2); }
 .carouselArrow.prev { left: 14px; }
 .carouselArrow.next { right: 14px; }
 .carouselCount, .cardCarouselCount { position: absolute; top: 14px; right: 14px; padding: 5px 10px; border-radius: 999px; background: rgba(11,44,77,.85); color: #fff; font-size: 12px; font-weight: 700; }
 .cardCarousel { touch-action: pan-y; }
-.cardCarouselCount { top: auto; bottom: 10px; right: 10px; font-size: 11px; padding: 3px 8px; }
+/* top-left, so the photo counter never covers the CARTOMUX watermark in the bottom-right corner */
+.cardCarouselCount { top: 10px; bottom: auto; left: 10px; right: auto; font-size: 11px; padding: 3px 8px; }
 .carouselDots { position: absolute; bottom: 16px; left: 0; right: 0; display: flex; justify-content: center; gap: 7px; }
 .carouselDots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.7); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer; }
 .carouselDots button.active { background: var(--green); outline: 2px solid #fff; }
@@ -537,6 +538,8 @@ a.card:hover h3 { color: var(--green-deep); }
 .uploadPreviews { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 12px; }
 .uploadPreview { position: relative; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: var(--line-soft); border: 1px solid var(--line); }
 .uploadPreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.uploadPreview .cropBtn { right: 38px; }
+.uploadPreview .fileTag { position: absolute; left: 6px; top: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .9); color: var(--ink-2); font-size: 10.5px; font-weight: 800; letter-spacing: .04em; }
 .uploadPreview button { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(11,44,77,.85); color: #fff; cursor: pointer; }
 .feeDetails { margin-top: 8px; }
 .feeDetails summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--green-deep); padding: 4px 0; }
@@ -819,7 +822,7 @@ html.ptrActive, html.ptrActive body { overscroll-behavior-y: contain; }
 
   .product { grid-template-columns: 1fr; gap: 20px; }
   .productGallery { position: static; margin: 0 -16px; }
-  .productImage { max-height: none; border-radius: 0; }
+  .productImage { max-width: none; border-radius: 0; }
   .productThumbs { display: none; }
 
   .authShell { grid-template-columns: 1fr; min-height: 0; }
@@ -1317,12 +1320,32 @@ body:has(.sheetOverlay) .supportFab { display: none; }
 .dropzone { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 18px; border: 1.5px dashed var(--line-strong); border-radius: var(--r-panel); background: var(--bg); text-align: center; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
 .dropzone:hover, .dropzone:focus-within { border-color: var(--green); background: var(--mint); }
 .field label.dropzone { display: flex; margin-bottom: 0; font-size: inherit; font-weight: inherit; color: inherit; }
+.dropzone.full { opacity: .55; cursor: not-allowed; }
 .dropzoneIcon { display: grid; place-items: center; width: 50px; height: 50px; margin-bottom: 6px; border-radius: 16px; background: var(--mint-2); color: var(--green-deep); }
 .dropzone b { color: var(--heading); }
 .dropzone .muted { font-size: 13px; }
 .watermarkNote { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 11px 13px; border-radius: 12px; background: var(--mint); color: var(--green-deep); font-size: 13.5px; line-height: 1.5; }
 .watermarkNote svg { flex: none; margin-top: 2px; }
 .coverTag { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(11, 44, 77, .85); color: #fff; font-size: 11px; font-weight: 700; }
+
+/* square photo cropper */
+.cropSheet { width: min(100%, 500px); outline: none; }
+.cropStage { position: relative; width: min(100%, 460px, calc(100dvh - 380px)); min-width: 240px; margin: 14px auto 14px; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 18px; background: #0b1b2b; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+.cropStage:active { cursor: grabbing; }
+.cropStage:focus-visible { box-shadow: 0 0 0 3px var(--green); }
+.cropBackdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(22px) brightness(.92); transform: scale(1.2); pointer-events: none; }
+.cropImage { position: absolute; left: 0; top: 0; max-width: none; pointer-events: none; will-change: transform; }
+.cropGrid { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55); background-image: linear-gradient(to right, transparent calc(33.333% - .5px), rgba(255, 255, 255, .38) calc(33.333% - .5px), rgba(255, 255, 255, .38) calc(33.333% + .5px), transparent calc(33.333% + .5px), transparent calc(66.666% - .5px), rgba(255, 255, 255, .38) calc(66.666% - .5px), rgba(255, 255, 255, .38) calc(66.666% + .5px), transparent calc(66.666% + .5px)), linear-gradient(to bottom, transparent calc(33.333% - .5px), rgba(255, 255, 255, .38) calc(33.333% - .5px), rgba(255, 255, 255, .38) calc(33.333% + .5px), transparent calc(33.333% + .5px), transparent calc(66.666% - .5px), rgba(255, 255, 255, .38) calc(66.666% - .5px), rgba(255, 255, 255, .38) calc(66.666% + .5px), transparent calc(66.666% + .5px)); }
+.cropMark { position: absolute; display: flex; align-items: center; gap: .36em; padding: .5em .9em; border-radius: 999px; background: radial-gradient(closest-side, rgba(6, 26, 46, .32), rgba(6, 26, 46, 0)); color: #fff; font-family: var(--font-d); font-weight: 800; letter-spacing: .08em; line-height: 1; opacity: .8; text-shadow: 0 1px 3px rgba(0, 0, 0, .45); pointer-events: none; }
+.cropMark img { width: auto; filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0, 0, 0, .45)); }
+.cropControls { display: flex; align-items: center; gap: 12px; max-width: 460px; margin: 0 auto 12px; }
+.cropControls .iconBtn { flex: none; width: 36px; height: 36px; }
+.cropControls input[type="range"] { flex: 1; min-width: 0; height: 28px; accent-color: var(--green); cursor: pointer; }
+.cropFit { max-width: 460px; margin: 0 auto; }
+.cropFit button { min-height: 42px; font-size: 14px; }
+.cropHint { max-width: 460px; margin: 12px auto 0; font-size: 13px; line-height: 1.5; color: var(--muted); text-align: center; }
+.cropSheet .error { max-width: 460px; margin: 12px auto 0; }
+.cropSheet .sheetActions { max-width: 460px; margin: 18px auto 0; }
 
 /* grid containers must not grow past their parent when children have wide content */
 .stack, .txBody, .txSection, .arrangeForm, .reviewBox, .reqMain, .ownerTools, .saleBuyerPicker, .sellerCard, .strip, .disputeCard, .metric, .productActions, .housingPayment { grid-template-columns: minmax(0, 1fr); }

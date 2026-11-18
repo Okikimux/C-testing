@@ -1,4 +1,100 @@
-/** Applies the CARTOMUX brand mark to seller listing photos before upload. */
+import { baseNameOf, canvasToFile } from './image-tools';
+
+/* CARTOMUX listing-photo watermark.
+
+   Design: a small, translucent white lockup (logo + wordmark) in the bottom-right
+   corner, sitting on a very soft halo. There is no solid badge, so the photo
+   stays the hero, and the shade plus a faint shadow keep the mark readable on both
+   bright and dark pictures. It is sized from the shorter side, so it fits square
+   photos (the format of every CARTOMUX listing) without ever touching the edge. */
+
+const LOGO_URL = '/campusdrop-logo.png';
+/* The logo file is 1024px square with transparent padding; this is the artwork area. */
+const LOGO_TRIM = { x: 56, y: 33, width: 937, height: 991, source: 1024 };
+
+export const WATERMARK_STYLE = {
+  /** Opacity of the white logo and wordmark. */
+  markOpacity: 0.8,
+  /** Opacity of the darkest part of the soft halo behind the mark. */
+  shadeOpacity: 0.26,
+  /** Wordmark size as a share of the photo's shorter side. */
+  sizeRatio: 0.034,
+} as const;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+/** Draws the watermark onto an existing canvas context. Exported so previews can reuse it. */
+export async function drawCartomuxMark(context: CanvasRenderingContext2D, width: number, height: number) {
+  const shortSide = Math.min(width, height);
+  const fontSize = clamp(Math.round(shortSide * WATERMARK_STYLE.sizeRatio), 13, 40);
+  const iconHeight = Math.round(fontSize * 1.5);
+  const iconWidth = Math.round((iconHeight * LOGO_TRIM.width) / LOGO_TRIM.height);
+  const gap = Math.round(fontSize * 0.36);
+  const margin = Math.max(10, Math.round(shortSide * 0.035));
+
+  const fontFamily = getComputedStyle(document.documentElement).getPropertyValue('--font-display').trim() || 'Arial, sans-serif';
+  const font = `800 ${fontSize}px ${fontFamily}`;
+  await document.fonts.load(font);
+
+  const logoResponse = await fetch(LOGO_URL, { cache: 'force-cache' });
+  if (!logoResponse.ok) throw new Error('The CARTOMUX logo could not be loaded.');
+  const logo = await createImageBitmap(await logoResponse.blob());
+
+  try {
+    context.save();
+    context.font = font;
+    context.textBaseline = 'middle';
+    context.textAlign = 'left';
+    if ('letterSpacing' in context) (context as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${(fontSize * 0.08).toFixed(2)}px`;
+    const wordWidth = context.measureText('CARTOMUX').width;
+    const lockupWidth = iconWidth + gap + wordWidth;
+    const x = width - margin - lockupWidth;
+    const y = height - margin - iconHeight;
+
+    // 1 · A soft, local halo behind the lockup so white stays readable on light photos.
+    const centerX = x + lockupWidth / 2;
+    const centerY = y + iconHeight / 2;
+    context.save();
+    context.translate(centerX, centerY);
+    context.scale(lockupWidth * 0.8, iconHeight * 2);
+    const halo = context.createRadialGradient(0, 0, 0, 0, 0, 1);
+    halo.addColorStop(0, `rgba(6, 26, 46, ${WATERMARK_STYLE.shadeOpacity})`);
+    halo.addColorStop(0.5, `rgba(6, 26, 46, ${WATERMARK_STYLE.shadeOpacity * 0.55})`);
+    halo.addColorStop(1, 'rgba(6, 26, 46, 0)');
+    context.fillStyle = halo;
+    context.beginPath();
+    context.arc(0, 0, 1, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+
+    // 2 · The logo as a single-colour white silhouette.
+    const silhouette = document.createElement('canvas');
+    silhouette.width = iconWidth * 2;
+    silhouette.height = iconHeight * 2;
+    const silhouetteContext = silhouette.getContext('2d');
+    if (!silhouetteContext) throw new Error('Your browser could not prepare the photo watermark.');
+    const unit = logo.width / LOGO_TRIM.source;
+    silhouetteContext.drawImage(logo, LOGO_TRIM.x * unit, LOGO_TRIM.y * unit, LOGO_TRIM.width * unit, LOGO_TRIM.height * unit, 0, 0, silhouette.width, silhouette.height);
+    silhouetteContext.globalCompositeOperation = 'source-in';
+    silhouetteContext.fillStyle = '#ffffff';
+    silhouetteContext.fillRect(0, 0, silhouette.width, silhouette.height);
+
+    context.globalAlpha = WATERMARK_STYLE.markOpacity;
+    context.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    context.shadowBlur = fontSize * 0.4;
+    context.shadowOffsetY = Math.max(1, fontSize * 0.04);
+    context.drawImage(silhouette, x, y, iconWidth, iconHeight);
+
+    // 3 · The wordmark.
+    context.fillStyle = '#ffffff';
+    context.fillText('CARTOMUX', x + iconWidth + gap, y + iconHeight / 2 + fontSize * 0.04);
+    context.restore();
+  } finally {
+    logo.close();
+  }
+}
+
+/** Adds the CARTOMUX watermark to a photo and returns the finished file. */
 export async function addCartomuxWatermark(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) throw new Error('Please choose a valid image file.');
   // Preserve animated GIFs rather than silently flattening their animation.
@@ -7,78 +103,16 @@ export async function addCartomuxWatermark(file: File): Promise<File> {
   let bitmap: ImageBitmap | undefined;
   try {
     bitmap = await createImageBitmap(file);
-    const width = bitmap.width;
-    const height = bitmap.height;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Your browser could not prepare the photo watermark.');
-
-    context.drawImage(bitmap, 0, 0, width, height);
-
-    const fontFamily = getComputedStyle(document.documentElement)
-      .getPropertyValue('--font-display').trim() || 'Arial, sans-serif';
-    const fontSize = Math.max(17, Math.min(42, Math.round(Math.min(width, height) * 0.038)));
-    const padding = Math.max(9, Math.round(fontSize * 0.34));
-    const iconSize = Math.round(fontSize * 1.28);
-    const gap = Math.round(fontSize * 0.28);
-    await document.fonts.load(`800 ${fontSize}px ${fontFamily}`);
-    context.font = `800 ${fontSize}px ${fontFamily}`;
-    context.textBaseline = 'middle';
-    context.textAlign = 'left';
-    const wordWidth = context.measureText('CARTOMUX').width;
-    const pillWidth = padding * 2 + iconSize + gap + wordWidth;
-    const pillHeight = padding * 2 + iconSize;
-    const margin = Math.max(12, Math.round(Math.min(width, height) * 0.025));
-    const x = width - pillWidth - margin;
-    const y = height - pillHeight - margin;
-    const radius = Math.round(pillHeight / 2);
-
-    // Soft navy glass capsule keeps the mark legible on both light and dark photos.
-    context.save();
-    context.globalAlpha = 0.82;
-    context.fillStyle = '#082340';
-    context.beginPath();
-    context.roundRect(x, y, pillWidth, pillHeight, radius);
-    context.fill();
-    context.restore();
-
-    const logoResponse = await fetch('/campusdrop-logo.png', { cache: 'force-cache' });
-    if (!logoResponse.ok) throw new Error('The CARTOMUX logo could not be loaded.');
-    const logoBitmap = await createImageBitmap(await logoResponse.blob());
-    const iconX = x + padding;
-    const iconY = y + padding;
-
-    // A light icon tile preserves the navy/green logo colours against any photograph.
-    context.save();
-    context.globalAlpha = 0.94;
-    context.fillStyle = '#ffffff';
-    context.beginPath();
-    context.roundRect(iconX, iconY, iconSize, iconSize, Math.round(iconSize * 0.24));
-    context.fill();
-    context.restore();
-    const inset = Math.round(iconSize * 0.08);
-    context.drawImage(logoBitmap, iconX + inset, iconY + inset, iconSize - inset * 2, iconSize - inset * 2);
-    logoBitmap.close();
-
-    context.save();
-    context.globalAlpha = 0.98;
-    context.fillStyle = '#ffffff';
-    context.font = `800 ${fontSize}px ${fontFamily}`;
-    context.textBaseline = 'middle';
-    context.fillText('CARTOMUX', iconX + iconSize + gap, y + pillHeight / 2);
-    context.restore();
-
-    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', 0.88));
-    if (!blob) throw new Error('The watermarked photo could not be generated. Please try another image.');
-    const baseName = file.name.replace(/\.[^.]+$/, '') || 'cartomux-photo';
-    return new File([blob], `${baseName}-cartomux.webp`, {
-      type: 'image/webp',
-      lastModified: Date.now(),
-    });
+    context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+    await drawCartomuxMark(context, bitmap.width, bitmap.height);
+    return await canvasToFile(canvas, `${baseNameOf(file)}-cartomux`, 0.9);
   } catch (error) {
-    if (error instanceof Error && /watermark|CARTOMUX logo|browser could not/i.test(error.message)) throw error;
+    if (error instanceof Error && /watermark|CARTOMUX logo|browser could not|could not be prepared/i.test(error.message)) throw error;
     throw new Error('This photo could not be watermarked in your browser. Please use a JPG, PNG or WebP image.');
   } finally {
     bitmap?.close();

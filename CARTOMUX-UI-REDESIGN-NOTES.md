@@ -11,3 +11,11 @@ No routes, database calls, RPC names or business logic were changed. Only markup
 
 ## Small UI-only additions
 Status tabs on transactions and requests, loading skeletons, delivery stepper, live storefront preview, active-filter count badge, campus category chips.
+
+## Photos: square crop + new watermark
+- `components/image-cropper.tsx` (new): square (1:1) cropper. Drag to position, pinch / mouse wheel / slider to zoom, "Fill square" or "Fit whole photo" (soft blurred sides), arrow keys and +/- for keyboard users. Output is up to 1200x1200.
+- `lib/image-tools.ts` (new): crop maths, canvas export (WebP, falling back to JPEG when a browser cannot encode WebP).
+- `lib/cartomux-watermark.ts` (redesigned): small, translucent white logo + wordmark in the bottom-right over a very soft halo. No solid badge. Tunable in `WATERMARK_STYLE` (markOpacity, shadeOpacity, sizeRatio).
+- `app/sell/page.tsx`: photos are cropped one by one as they are chosen, watermarked immediately (thumbnails show the real result), can be re-cropped from the original with the crop button, and are never watermarked twice. Animated GIFs are left untouched.
+- `app/globals.css`: product image is always square (the old max-height could break the ratio on wide screens); the card photo counter moved to the top-left so it never covers the watermark.
+- Photos already uploaded keep their old watermark; they are only centre-cropped by the square frame, as before.
