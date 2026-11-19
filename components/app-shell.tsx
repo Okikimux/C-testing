@@ -7,10 +7,12 @@ import PullToRefresh from './pull-to-refresh';
 import { ThemeSwitch } from './theme';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Bell, Home, MessageCircle, Plus, ShoppingBag, ChevronDown, Settings, LogOut, UserRound, Package, Heart } from 'lucide-react';
+import { Bell, Home, MessageCircle, Plus, ShoppingBag, ChevronDown, Settings, LogOut, UserRound, Package, Heart, Store } from 'lucide-react';
 import { createClient } from '../lib/supabase';
 import { Avatar } from './avatar';
 import { VerifiedName } from './verified-name';
+import { AccountBadge } from './account-badge';
+import { useMyAccount } from '../lib/use-account';
 import ContactSupport from './contact-support';
 import NetworkStatus from './network-status';
 import ServiceWorkerRegister from './service-worker-register';
@@ -21,6 +23,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<any>(null);
   const [verified, setVerified] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const account = useMyAccount();
   const pathname = usePathname();
   const [unreadMessages, setUnreadMessages] = useState(0);
   useEffect(() => { if (!menuOpen) return; const close = (event: MouseEvent) => { const target = event.target as Element | null; if (target && !target.closest('.accountMenu')) setMenuOpen(false); }; const key = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); }; document.addEventListener('click', close); document.addEventListener('keydown', key); return () => { document.removeEventListener('click', close); document.removeEventListener('keydown', key); }; }, [menuOpen]);
@@ -165,10 +168,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <ChevronDown size={14} />
               </button>
               {menuOpen && <div className="accountDropdown">
-                <div className="accountSummary"><Avatar url={avatarUrl} name={displayName} size="md" /><div><VerifiedName userId={user?.id} name={displayName} verified={verified}/><span>{profile?.campus || 'Campus not set'}</span></div></div>
+                <div className="accountSummary"><Avatar url={avatarUrl} name={displayName} size="md" /><div><VerifiedName userId={user?.id} name={displayName} verified={verified}/><span>{profile?.campus || 'Campus not set'}</span>{account.accountType && <AccountBadge type={account.accountType} className="inMenu" />}</div></div>
                 <Link href="/profile" onClick={() => setMenuOpen(false)}><UserRound size={17} /> Profile</Link>
                 <Link href="/my-listings" onClick={() => setMenuOpen(false)}><Package size={17} /> My listings</Link>
                 <Link href="/favourites" onClick={() => setMenuOpen(false)}><Heart size={17} /> Favourites</Link>
+                {account.isVendor && <Link href="/store/manage" onClick={() => setMenuOpen(false)}><Store size={17} /> My storefront</Link>}
                 <Link href="/settings" onClick={() => setMenuOpen(false)}><Settings size={17} /> Settings</Link>
                 <ThemeSwitch />
                 <button onClick={signOut}><LogOut size={17} /> Sign out</button>

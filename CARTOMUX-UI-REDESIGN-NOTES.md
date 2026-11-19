@@ -19,3 +19,6 @@ Status tabs on transactions and requests, loading skeletons, delivery stepper, l
 - `app/sell/page.tsx`: photos are cropped one by one as they are chosen, watermarked immediately (thumbnails show the real result), can be re-cropped from the original with the crop button, and are never watermarked twice. Animated GIFs are left untouched.
 - `app/globals.css`: product image is always square (the old max-height could break the ratio on wide screens); the card photo counter moved to the top-left so it never covers the watermark.
 - Photos already uploaded keep their old watermark; they are only centre-cropped by the square frame, as before.
+
+## Student & Vendor accounts
+See `CARTOMUX-ACCOUNT-TYPES-SETUP.md`. Run `supabase/cartomux-account-types.sql` before deploying.

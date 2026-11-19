@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { BackButton } from '../../../components/back-button';
 import { createClient } from '../../../lib/supabase';
 import { CheckCircle2, ExternalLink, Info, Store } from 'lucide-react';
+import { VendorOnlyGate } from '../../../components/account-badge';
+import { useMyAccount } from '../../../lib/use-account';
+import { canUse } from '../../../lib/account-type';
 
 function initialsOf(value: string) {
   const words = value.trim().split(/\s+/).filter(Boolean);
@@ -12,7 +15,8 @@ function initialsOf(value: string) {
 }
 
 export default function ManageStore() {
-  const [userId, setUserId] = useState(''), [name, setName] = useState(''), [slug, setSlug] = useState(''), [savedSlug, setSavedSlug] = useState(''), [description, setDescription] = useState(''), [busy, setBusy] = useState(false), [notice, setNotice] = useState(''), [ok, setOk] = useState(false);
+  const [userId, setUserId] = useState(''), [name, setName] = useState(''), [slug, setSlug] = useState(''), [savedSlug, setSavedSlug] = useState(''), [description, setDescription] = useState(''), [busy, setBusy] = useState(false), [notice, setNotice] = useState(''), [ok, setOk] = useState(false), [storeChecked, setStoreChecked] = useState(false);
+  const account = useMyAccount();
   useEffect(() => {
     const s = createClient();
     s.auth.getUser().then(async ({ data: { user } }) => {
@@ -20,8 +24,15 @@ export default function ManageStore() {
       setUserId(user.id);
       const { data } = await s.from('vendor_storefronts').select('*').eq('owner_id', user.id).maybeSingle();
       if (data) { setName(data.store_name); setSlug(data.slug); setSavedSlug(data.slug); setDescription(data.description || ''); }
+      setStoreChecked(true);
     });
   }, []);
+  // First visit: start from the business name chosen at registration.
+  useEffect(() => {
+    if (!storeChecked || savedSlug || !account.businessName) return;
+    setName(current => current || account.businessName);
+    setSlug(current => current || account.businessName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+  }, [storeChecked, savedSlug, account.businessName]);
   async function save(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setNotice(''); setOk(false);
     const clean = slug.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -32,6 +43,7 @@ export default function ManageStore() {
     setBusy(false);
   }
   const shownSlug = slug.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-store';
+  if (!account.loading && !canUse('storefront', account.accountType)) return <main className="section"><BackButton /><div className="container"><VendorOnlyGate feature="storefront" icon={<Store size={26} />} /></div></main>;
   return <main className="section"><BackButton /><div className="container"><div className="manageLayout">
     <div className="formCard">
       <span className="eyebrow">VENDOR STOREFRONT</span>

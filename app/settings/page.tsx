@@ -4,10 +4,15 @@ import { friendlyError } from '../../lib/friendly-error';
 import { useFlash } from '../../components/toast';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, ImagePlus, Save, UserRound, ShieldCheck } from 'lucide-react';
+import { ArrowLeftRight, Check, ImagePlus, Save, UserRound, ShieldCheck } from 'lucide-react';
 import { createClient } from '../../lib/supabase';
 import { Avatar } from '../../components/avatar';
 import PushNotifications from '../../components/push-notifications';
+import { AccountBadge } from '../../components/account-badge';
+import { VendorFields } from '../../components/account-type-picker';
+import { SwitchAccountSheet } from '../../components/switch-account-sheet';
+import { ACCOUNT_TYPES } from '../../lib/account-type';
+import { useMyAccount } from '../../lib/use-account';
 
 const presets = ['default:campus', 'default:drop', 'default:green', 'default:classic'];
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
@@ -41,6 +46,11 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const account = useMyAccount();
+  const [businessName, setBusinessName] = useState('');
+  const [businessCategory, setBusinessCategory] = useState('');
+  const [switching, setSwitching] = useState(false);
+  useEffect(() => { if (!account.loading) { setBusinessName(account.businessName); setBusinessCategory(account.businessCategory); } }, [account.loading, account.businessName, account.businessCategory]);
 
   useEffect(() => {
     (async () => {
@@ -73,6 +83,12 @@ export default function Settings() {
     const supabase = createClient();
     const { error: profileError } = await supabase.from('profiles').update({ full_name: cleanName, campus: cleanCampus, location: cleanLocation || null, avatar_url: avatarUrl }).eq('id', user.id);
     if (profileError) { setError(friendlyError(profileError, 'Your settings could not be saved. Please try again.')); setSaving(false); return; }
+    if (account.isVendor) {
+      const cleanBusiness = businessName.trim().slice(0, 80);
+      if (cleanBusiness.length < 2) { setError('Enter your business or shop name (at least 2 characters).'); setSaving(false); return; }
+      const { error: businessError } = await supabase.from('profiles').update({ business_name: cleanBusiness, business_category: businessCategory || null }).eq('id', user.id);
+      if (businessError) { setError(friendlyError(businessError, 'Your business details could not be saved. Please try again.')); setSaving(false); return; }
+    }
     const { error: privateError } = await supabase.from('profile_private').upsert({ user_id: user.id, phone: cleanPhone || null, whatsapp: cleanWhatsapp || null }, { onConflict: 'user_id' });
     if (privateError) setError(friendlyError(privateError, 'Your contact details could not be saved. Please try again.')); else setMessage('Settings saved.');
     setSaving(false);
@@ -105,10 +121,17 @@ export default function Settings() {
       <div className="field"><label htmlFor="campus">Campus</label><input id="campus" value={campus} maxLength={120} placeholder="e.g. Your university or college" onChange={e=>setCampus(e.target.value)} /></div>
       <div className="field"><label htmlFor="location">Location <span className="muted">(public)</span></label><input id="location" value={location} maxLength={160} placeholder="e.g. Ijebu-Ode" onChange={e=>setLocation(e.target.value)} /></div>
       <div className="field"><label>Choose a default avatar</label><div className="avatarChoices">{presets.map(p=><button key={p} type="button" className={`avatarChoice ${avatarUrl===p?'selected':''}`} onClick={()=>setAvatarUrl(p)} aria-label={`Choose ${p.replace('default:','')} avatar`}><Avatar url={p} size="md" />{avatarUrl===p&&<Check size={15}/>}</button>)}</div></div>
+      {account.isVendor && <div className="vendorSettingsBox"><div className="privateContactHead"><ShieldCheck size={18}/><div><b>Business details</b><p className="muted">Shown on your public profile and used for your storefront.</p></div></div><VendorFields idPrefix="settings" businessName={businessName} onBusinessName={setBusinessName} category={businessCategory} onCategory={setBusinessCategory}/></div>}
       <div className="privateContactBox"><div className="privateContactHead"><ShieldCheck size={18}/><div><b>Private contact details</b><p className="muted">Only you can read or edit these fields. They are never shown on public profiles.</p></div></div><div className="privateGrid"><div className="field"><label htmlFor="phone">Phone number</label><input id="phone" value={phone} maxLength={30} inputMode="tel" onChange={e=>setPhone(e.target.value)} /></div><div className="field"><label htmlFor="whatsapp">WhatsApp number</label><input id="whatsapp" value={whatsapp} maxLength={30} inputMode="tel" onChange={e=>setWhatsapp(e.target.value)} /></div></div></div>
       
       <button className="btn green" onClick={save} disabled={saving}><Save size={17}/>{saving?'Saving...':'Save settings'}</button>
     </div>
+    <div className="panel accountTypePanel" id="account-type">
+      <div className="accountTypeHead"><div><h3>Account type</h3><p className="muted">{account.accountType ? ACCOUNT_TYPES[account.accountType].tagline : 'Your account type appears here.'}</p></div>{account.accountType && <AccountBadge type={account.accountType} />}</div>
+      {account.accountType && <button type="button" className="btn light" onClick={() => setSwitching(true)}><ArrowLeftRight size={17}/> Switch to {account.accountType === 'vendor' ? 'a student' : 'a vendor'} account</button>}
+      {!account.loading && !account.accountType && <p className="muted">Account types are not available yet. Ask the CARTOMUX team to apply the latest database update.</p>}
+    </div>
+    {switching && account.accountType && <SwitchAccountSheet current={account.accountType} initialBusinessName={businessName} initialCategory={businessCategory} onClose={() => setSwitching(false)} onDone={(next, details) => { setSwitching(false); setBusinessName(details.businessName); setBusinessCategory(details.businessCategory); setMessage(next === 'vendor' ? 'You now have a vendor account. Your storefront and analytics are unlocked.' : 'You now have a student account.'); account.refresh(); }} />}
     <PushNotifications />
     <div className="panel settingsInfo"><UserRound size={20}/><div><b>Account email</b><div className="muted">{user?.email || 'Loading...'}</div></div></div>
   </div></main>;

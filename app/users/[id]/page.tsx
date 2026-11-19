@@ -9,6 +9,9 @@ import { createClient } from '../../../lib/supabase';
 import { Avatar } from '../../../components/avatar';
 import { VerifiedName } from '../../../components/verified-name';
 import { fetchVerifiedIds } from '../../../lib/verified';
+import { AccountBadge } from '../../../components/account-badge';
+import { fetchAccountInfo } from '../../../lib/account-type';
+import type { AccountInfo } from '../../../lib/account-type';
 
 type Profile = { id: string; full_name: string | null; campus: string | null; location: string | null; avatar_url: string | null; created_at: string | null };
 type Listing = { id: string; title: string; price: number | null; listing_type: 'product' | 'accommodation' | null; payment_initial: number | null; campus: string | null; status: string; created_at: string; listing_images?: { url: string | null; storage_path: string }[] };
@@ -23,6 +26,7 @@ export default function PublicUserProfile() {
   const [reviewStats, setReviewStats] = useState({ average: 0, count: 0, completed: 0 });
   const [storeSlug, setStoreSlug] = useState('');
   const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
 
   useEffect(() => {
     const supabase=createClient(); let mounted=true; let channel:any;
@@ -37,7 +41,7 @@ export default function PublicUserProfile() {
       if(!mounted)return;
       if(profileError||!p)setError('This profile could not be found.'); else {setError('');setProfile(p)}
       const reviewRows=reviews||[];setReviewStats({average:Number(trust?.[0]?.average_rating??(reviewRows.length?reviewRows.reduce((sum:number,x:any)=>sum+x.rating,0)/reviewRows.length:0)),count:Number(trust?.[0]?.review_count??reviewRows.length),completed:Number(trust?.[0]?.completed_transactions??0)});const buyerIds=[...new Set(reviewRows.map((x:any)=>x.buyer_id))];const {data:buyers}=buyerIds.length?await supabase.from('profiles').select('id,full_name').in('id',buyerIds):{data:[] as any[]};const buyerNames=new Map((buyers||[]).map((x:any)=>[x.id,x.full_name||'CARTOMUX buyer']));setReviewsList(reviewRows.map((x:any)=>({...x,buyerName:buyerNames.get(x.buyer_id)||'CARTOMUX buyer'})));setStoreSlug(store?.slug||'');
-      setListings((l||[]) as Listing[]); setVerified((await fetchVerifiedIds(supabase,[id])).has(id)); setLoading(false);
+      setListings((l||[]) as Listing[]); setVerified((await fetchVerifiedIds(supabase,[id])).has(id)); setAccountInfo((await fetchAccountInfo(supabase,[id])).get(id)||null); setLoading(false);
     };
     load();
     channel=supabase.channel(`public-profile-${id}`)
@@ -62,7 +66,7 @@ export default function PublicUserProfile() {
               <Avatar url={profile.avatar_url} name={profile.full_name || 'Student'} size="lg" />
               <div className="hubIdentCopy">
                 <h1><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1>
-                <p className="muted">{profile.campus || 'Campus not set'}</p>
+                <div className="hubTypeRow"><AccountBadge type={accountInfo?.accountType}/>{accountInfo?.accountType==='vendor'&&accountInfo.businessName&&<span className="hubBusiness">{accountInfo.businessName}{accountInfo.businessCategory?` · ${accountInfo.businessCategory}`:''}</span>}</div><p className="muted">{profile.campus || 'Campus not set'}</p>
                 {profile.location && <p className="profilePublicMeta"><MapPin size={15}/> {profile.location}</p>}
               </div>
             </div>

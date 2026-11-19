@@ -7,6 +7,9 @@ import { EmptyState, PageHeader, Pill } from '../../components/ui-bits';
 import type { PillTone } from '../../components/ui-bits';
 import { Skeleton } from '../../components/skeleton';
 import { BarChart3, Eye, Heart, MessageCircle, Package } from 'lucide-react';
+import { VendorOnlyGate } from '../../components/account-badge';
+import { useMyAccount } from '../../lib/use-account';
+import { canUse } from '../../lib/account-type';
 
 function statusTone(status:string):PillTone{
   if(status==='available')return 'ok';
@@ -24,10 +27,12 @@ function Metric({icon,value,max,tone,label}:{icon:React.ReactNode;value:number;m
 
 export default function SellerAnalytics(){
   const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true);
+  const account=useMyAccount();
   useEffect(()=>{const s=createClient();(async()=>{const {data:{user}}=await s.auth.getUser();if(!user){location.assign('/auth/login?next=/seller-analytics');return}const [{data:stats},{data:listings}]=await Promise.all([s.rpc('get_my_listing_analytics'),s.from('listings').select('id,title,status').eq('seller_id',user.id).order('created_at',{ascending:false})]);const map=new Map((stats||[]).map((x:any)=>[x.listing_id,x]));setRows((listings||[]).map((x:any)=>({...x,...(map.get(x.id)||{views:0,inquiries:0,favourites:0})})));setLoading(false)})();},[]);
   const total=rows.reduce((a,x)=>({views:a.views+x.views,inquiries:a.inquiries+x.inquiries,favourites:a.favourites+x.favourites}),{views:0,inquiries:0,favourites:0});
   const max={views:Math.max(0,...rows.map(x=>x.views)),inquiries:Math.max(0,...rows.map(x=>x.inquiries)),favourites:Math.max(0,...rows.map(x=>x.favourites))};
   const inquiryRate=total.views>0?Math.round((total.inquiries/total.views)*100):null;
+  if(!account.loading&&!canUse('analytics',account.accountType))return <main className="section"><BackButton/><div className="container"><VendorOnlyGate feature="analytics" icon={<BarChart3 size={26}/>}/></div></main>;
   return <main className="section"><BackButton/><div className="container">
     <PageHeader eyebrow="Seller tools" title="Seller analytics" actions={<Link href="/my-listings" className="btn light"><Package size={16}/> My listings</Link>}>Understand how buyers discover and interact with your listings.</PageHeader>
 

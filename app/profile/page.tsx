@@ -2,17 +2,21 @@
 import { BackButton } from '../../components/back-button';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Heart, MessageCircle, Package, Settings, LogOut, MapPin, BadgeCheck, BarChart3, Store, CalendarDays, Receipt, CalendarClock, ChevronRight } from 'lucide-react';
+import { Heart, MessageCircle, Package, Settings, LogOut, MapPin, BadgeCheck, BarChart3, Store, CalendarDays, Receipt, CalendarClock, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createClient } from '../../lib/supabase';
 import { Avatar } from '../../components/avatar';
 import { VerifiedName } from '../../components/verified-name';
+import { AccountBadge } from '../../components/account-badge';
+import { useMyAccount } from '../../lib/use-account';
+import { canUse } from '../../lib/account-type';
 
 function Tile({href,icon,title,text}:{href:string;icon:ReactNode;title:string;text:string}){
   return <Link className="hubTile" href={href}><span className="hubTileIcon">{icon}</span><span className="hubTileBody"><b>{title}</b><span>{text}</span></span><ChevronRight className="hubTileGo" size={18}/></Link>;
 }
 
 export default function Profile(){
+  const account=useMyAccount();
   const [profile,setProfile]=useState<any>(null); const [count,setCount]=useState(0); const [verified,setVerified]=useState(false);
   useEffect(()=>{
     const s=createClient(); let mounted=true; let profileChannel:any; let listingChannel:any; let verificationChannel:any; const channelSuffix=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
@@ -36,7 +40,7 @@ export default function Profile(){
       <div className="hubHeroBody">
         <div className="hubIdent">
           <Avatar url={profile.avatar_url} name={profile.full_name} size="lg"/>
-          <div className="hubIdentCopy"><h1><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1><div className="muted">{profile.campus||'Campus not set'}</div>{profile.location&&<div className="profilePublicMeta"><MapPin size={14}/>{profile.location}</div>}</div>
+          <div className="hubIdentCopy"><h1><VerifiedName userId={profile.id} name={profile.full_name} verified={verified}/></h1><div className="hubTypeRow"><AccountBadge type={account.accountType}/>{account.isVendor&&account.businessName&&<span className="hubBusiness">{account.businessName}{account.businessCategory?` · ${account.businessCategory}`:''}</span>}</div><div className="muted">{profile.campus||'Campus not set'}</div>{profile.location&&<div className="profilePublicMeta"><MapPin size={14}/>{profile.location}</div>}</div>
         </div>
         <div className="hubActions"><Link className="btn light" href="/verification"><BadgeCheck size={17}/> Verification</Link><Link className="btn light" href="/settings"><Settings size={17}/> Settings</Link><button className="btn danger" onClick={signout}><LogOut size={17}/> Sign out</button></div>
       </div>
@@ -49,10 +53,12 @@ export default function Profile(){
       <Tile href="/transactions" icon={<Receipt size={22}/>} title="Transactions" text="Confirm purchases and leave reviews"/>
     </div></section>
 
-    <section className="hubGroup" aria-labelledby="hub-seller"><div className="hubGroupHead"><h2 id="hub-seller">Seller tools</h2></div><div className="hubGrid">
-      <Tile href="/seller-analytics" icon={<BarChart3 size={22}/>} title="Seller analytics" text="Views, inquiries and favourites"/>
-      <Tile href="/store/manage" icon={<Store size={22}/>} title="My storefront" text="Create a shareable vendor shop"/>
-    </div></section>
+    {(canUse('storefront',account.accountType)||canUse('analytics',account.accountType))&&<section className="hubGroup" aria-labelledby="hub-seller"><div className="hubGroupHead"><h2 id="hub-seller">{account.isVendor?'Vendor tools':'Seller tools'}</h2></div><div className="hubGrid">
+      {canUse('analytics',account.accountType)&&<Tile href="/seller-analytics" icon={<BarChart3 size={22}/>} title="Seller analytics" text="Views, inquiries and favourites"/>}
+      {canUse('storefront',account.accountType)&&<Tile href="/store/manage" icon={<Store size={22}/>} title="My storefront" text="Create a shareable vendor shop"/>}
+    </div></section>}
+
+    {account.isStudent&&<Link href="/settings#account-type" className="upsellCard"><span className="upsellIcon"><Store size={22}/></span><span className="upsellBody"><b>Selling as a business?</b><span>Switch to a vendor account to unlock a storefront and seller analytics.</span></span><span className="upsellAction"><ArrowLeftRight size={16}/> Switch</span></Link>}
 
     <section className="hubGroup" aria-labelledby="hub-campus"><div className="hubGroupHead"><h2 id="hub-campus">Campus services</h2></div><div className="hubGrid">
       <Tile href="/viewing-requests" icon={<CalendarDays size={22}/>} title="Accommodation viewings" text="Manage inspection requests"/>
