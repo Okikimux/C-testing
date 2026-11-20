@@ -1,6 +1,6 @@
 -- CARTOMUX account types: every account is either a STUDENT or a VENDOR.
--- Run this once in the Supabase SQL editor BEFORE deploying the matching app update.
--- It is safe to run more than once.
+-- Run this in the Supabase SQL editor BEFORE deploying the matching app update.
+-- It is safe to run more than once (if you already ran an earlier version, run it again to get the latest rules).
 --
 -- Note: `profiles.role` is still the permission role (student / admin) and is NOT touched.
 -- `profiles.account_type` is the new "what kind of seller are you" field.
@@ -120,6 +120,15 @@ declare
   v_category text := nullif(trim(coalesce(p_business_category, '')), '');
 begin
   if v_user is null then raise exception 'Please sign in first.'; end if;
+
+  -- Locked once verification is paid for (or fully waived). It unlocks again if the payment is refunded.
+  if exists (
+    select 1 from public.student_verifications v
+    where v.user_id = v_user and v.payment_status in ('paid', 'waived')
+  ) then
+    raise exception 'Your account type is locked because your verification payment has been confirmed. Please contact CARTOMUX support if you need a change.';
+  end if;
+
   if p_account_type is null or p_account_type not in ('student', 'vendor') then
     raise exception 'Choose either a student or a vendor account.';
   end if;

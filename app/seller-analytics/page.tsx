@@ -32,7 +32,7 @@ export default function SellerAnalytics(){
   const total=rows.reduce((a,x)=>({views:a.views+x.views,inquiries:a.inquiries+x.inquiries,favourites:a.favourites+x.favourites}),{views:0,inquiries:0,favourites:0});
   const max={views:Math.max(0,...rows.map(x=>x.views)),inquiries:Math.max(0,...rows.map(x=>x.inquiries)),favourites:Math.max(0,...rows.map(x=>x.favourites))};
   const inquiryRate=total.views>0?Math.round((total.inquiries/total.views)*100):null;
-  if(!account.loading&&!canUse('analytics',account.accountType))return <main className="section"><BackButton/><div className="container"><VendorOnlyGate feature="analytics" icon={<BarChart3 size={26}/>}/></div></main>;
+  if(!account.loading&&!canUse('analytics',account.accountType))return <main className="section"><BackButton/><div className="container"><VendorOnlyGate feature="analytics" icon={<BarChart3 size={26}/>} locked={account.typeLocked}/></div></main>;
   return <main className="section"><BackButton/><div className="container">
     <PageHeader eyebrow="Seller tools" title="Seller analytics" actions={<Link href="/my-listings" className="btn light"><Package size={16}/> My listings</Link>}>Understand how buyers discover and interact with your listings.</PageHeader>
 

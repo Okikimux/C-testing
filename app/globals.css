@@ -108,6 +108,7 @@ p { margin: 0 0 1em; }
 .eyebrow { color: var(--green-deep); font-weight: 700; font-size: 14px; letter-spacing: 0; text-transform: none; margin-bottom: 6px; }
 .muted { color: var(--muted); font-size: 14px; }
 .textLink { color: var(--green-deep); font-weight: 700; }
+@media (max-width: 850px) { a.textLink { padding: 10px 4px; margin: -10px -4px; } }
 .textLink:hover { text-decoration: underline; text-underline-offset: 3px; }
 .row { display: flex; align-items: center; gap: 12px; }
 .between { justify-content: space-between; }
@@ -228,7 +229,7 @@ a.panel { display: block; }
 .backButton:hover { background: var(--line-soft); }
 .formPage .backButton { margin-left: 0; }
 
-.productBack { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--ink-2); font-weight: 650; font-size: 15px; }
+.productBack { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 12px; color: var(--ink-2); font-weight: 650; font-size: 15px; }
 .productBack:hover { color: var(--heading); }
 
 .mobileNav { display: none; }
@@ -238,7 +239,8 @@ a.panel { display: block; }
 .footerIn { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
 .footer strong { font-family: var(--font-d); font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
 .footerMuted { margin-top: 4px; color: #aebdcc; font-size: 14px; }
-.footerLinks { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 16px; font-size: 14px; }
+.footerLinks { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 10px; font-size: 14px; }
+.footerLinks a { display: inline-flex; align-items: center; min-height: 40px; }
 .footerLinks a { color: #dbe4ee; }
 .footerLinks a:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .muxlabCredit { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 650; color: #dbe4ee; }
@@ -248,6 +250,7 @@ a.panel { display: block; }
 /* 6 · Home ------------------------------------------------------------------ */
 .hero { background: var(--navy); color: #fff; padding: 72px 0 80px; overflow: hidden; }
 .heroGrid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 56px; align-items: center; }
+.heroGrid > * { min-width: 0; }
 .hero h1 { color: #fff; font-size: clamp(54px, 8.4vw, 112px); line-height: .92; letter-spacing: -0.045em; font-weight: 800; margin: 0 0 28px; }
 .hero h1 span { display: block; }
 .hero h1 span:nth-child(2) { padding-left: .5em; }
@@ -305,7 +308,7 @@ a.card:hover h3 { color: var(--green-deep); }
 .picFlag { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; }
 .picSave { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--glass); color: var(--ink-2); }
 .cardbody { padding: 12px 2px 0; min-width: 0; }
-.cardbody h3 { margin: 0 0 4px; font-family: var(--font-b); font-size: 15px; font-weight: 650; letter-spacing: 0; line-height: 1.3; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cardbody h3 { margin: 0 0 4px; font-family: var(--font-b); font-size: 15px; font-weight: 650; letter-spacing: 0; line-height: 1.3; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .cardMeta { font-size: 13px; color: var(--muted); }
 .cardprice { font-family: var(--font-d); font-weight: 800; font-size: 17px; color: var(--heading); margin-bottom: 4px; }
 .sellerMini { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
@@ -362,7 +365,8 @@ a.card:hover h3 { color: var(--green-deep); }
 /* top-left, so the photo counter never covers the CARTOMUX watermark in the bottom-right corner */
 .cardCarouselCount { top: 10px; bottom: auto; left: 10px; right: auto; font-size: 11px; padding: 3px 8px; }
 .carouselDots { position: absolute; bottom: 16px; left: 0; right: 0; display: flex; justify-content: center; gap: 7px; }
-.carouselDots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.7); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer; }
+.carouselDots button { position: relative; width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.7); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer; }
+.carouselDots button::after { content: ""; position: absolute; inset: -14px -7px; }
 .carouselDots button.active { background: var(--green); outline: 2px solid #fff; }
 .productThumbs { display: flex; gap: 10px; margin-top: 12px; overflow-x: auto; }
 .productThumb { width: 68px; height: 68px; flex: 0 0 68px; padding: 0; border: 2px solid transparent; border-radius: 12px; background: var(--surface); overflow: hidden; cursor: pointer; }
@@ -370,10 +374,10 @@ a.card:hover h3 { color: var(--green-deep); }
 .productThumb img { width: 100%; height: 100%; object-fit: cover; }
 
 .productInfo { min-width: 0; }
-.productInfo h1 { font-size: clamp(28px, 3.6vw, 40px); margin: 14px 0 10px; }
+.productInfo h1 { font-size: clamp(28px, 3.6vw, 40px); margin: 14px 0 12px; overflow-wrap: anywhere; }
 .productHeadRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .productHeadRow .conditionBadge { border: 1px solid var(--line-strong); }
-.price { font-family: var(--font-d); font-size: clamp(32px, 4vw, 44px); font-weight: 800; letter-spacing: -0.03em; color: var(--heading); margin: 0 0 6px; line-height: 1; }
+.price { font-family: var(--font-d); font-size: clamp(32px, 4vw, 44px); font-weight: 800; letter-spacing: -0.03em; color: var(--heading); margin: 0 0 8px; line-height: 1.05; overflow-wrap: anywhere; }
 .productMeta { color: var(--muted); font-size: 15px; margin-bottom: 22px; }
 .productRule { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
 .productInfo h3 { margin: 0 0 8px; font-size: 18px; }
@@ -429,6 +433,7 @@ a.card:hover h3 { color: var(--green-deep); }
 .settingsLayout { max-width: 760px; }
 .settingsCard { margin-top: 20px; padding: 28px; }
 .settingsAvatarRow { display: flex; align-items: center; gap: 20px; padding-bottom: 24px; margin-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
+.settingsInfo > div { min-width: 0; overflow-wrap: anywhere; }
 .settingsInfo { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
 .privateContactBox { margin-top: 28px; padding: 20px; border-radius: 18px; background: var(--mint); border: 1px solid var(--mint-2); }
 .privateContactHead { display: flex; gap: 12px; align-items: flex-start; }
@@ -542,7 +547,7 @@ a.card:hover h3 { color: var(--green-deep); }
 .uploadPreview .fileTag { position: absolute; left: 6px; top: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .9); color: var(--ink-2); font-size: 10.5px; font-weight: 800; letter-spacing: .04em; }
 .uploadPreview button { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(11,44,77,.85); color: #fff; cursor: pointer; }
 .feeDetails { margin-top: 8px; }
-.feeDetails summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--green-deep); padding: 4px 0; }
+.feeDetails summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--green-deep); padding: 10px 0; }
 .feeDetails p { margin: 8px 0 0; line-height: 1.6; }
 .formCard > .panel { background: var(--bg); padding: 18px; border-radius: 16px; }
 
@@ -616,7 +621,7 @@ a.card:hover h3 { color: var(--green-deep); }
 .toast.info { color: var(--heading); }
 .toastIcon { flex: none; margin-top: 1px; }
 .toastText { flex: 1; min-width: 0; padding-top: 1px; font-size: 15px; line-height: 1.45; color: var(--ink); overflow-wrap: anywhere; }
-.toastClose { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.toastClose { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
 .toastClose:hover { background: var(--line-soft); color: var(--ink); }
 .toastBar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: currentColor; opacity: .55; transform-origin: left center; animation: toastBar linear forwards; }
 @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
@@ -802,7 +807,7 @@ html.ptrActive, html.ptrActive body { overscroll-behavior-y: contain; }
   .marketBar { margin: 0 -16px 18px; padding: 10px 16px; }
 
   .hero { padding: 36px 0 44px; }
-  .heroGrid { grid-template-columns: 1fr; gap: 36px; }
+  .heroGrid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
   .hero h1 { font-size: clamp(52px, 17vw, 84px); margin-bottom: 20px; }
   .hero h1 span:nth-child(2) { padding-left: .4em; }
   .hero h1 span:nth-child(3) { padding-left: .8em; }
@@ -816,7 +821,7 @@ html.ptrActive, html.ptrActive body { overscroll-behavior-y: contain; }
   .footerIn { flex-direction: column; align-items: flex-start; }
   .footer { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
 
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 14px; }
   .priceTag { font-size: 15px; padding: 6px 11px 6px 10px; }
   .cardbody h3 { font-size: 14px; }
 
@@ -1061,14 +1066,14 @@ html.ptrActive, html.ptrActive body { overscroll-behavior-y: contain; }
 .reqFoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 .reqActions { display: flex; gap: 8px; flex-wrap: wrap; }
 .reqActions .btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
-.reqLink { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: 14px; font-weight: 700; color: var(--green-deep); }
+.reqLink { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; margin-left: auto; font-size: 14px; font-weight: 700; color: var(--green-deep); }
 .reqLink:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* transactions */
 .txCard { overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); }
-.txHead { display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; }
+.txHead { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 10px 14px; padding: 18px 20px; }
 .txIcon { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 14px; background: var(--mint); color: var(--green-deep); }
-.txHeadCopy { flex: 1; min-width: 0; }
+.txHeadCopy { flex: 1 1 220px; min-width: 0; }
 .txTitle { margin: 0 0 5px; font-family: var(--font-b); font-size: 17px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
 .txMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--muted); }
 .txBody { display: grid; gap: 14px; padding: 0 20px 20px; }
@@ -1122,7 +1127,7 @@ html.ptrActive, html.ptrActive body { overscroll-behavior-y: contain; }
 .perfRow { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); gap: 18px; align-items: center; padding: 16px 22px; border-top: 1px solid var(--line-soft); }
 .perfRow.labels { padding-top: 10px; padding-bottom: 10px; background: var(--bg); font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .perfItem { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.perfItem a { font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+.perfItem a { display: block; padding: 8px 0; margin: -8px 0; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
 .perfItem a:hover { color: var(--green-deep); }
 .metric { display: grid; gap: 6px; }
 .metricTop { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--heading); }
@@ -1415,11 +1420,32 @@ body:has(.sheetOverlay) .supportFab { display: none; }
 .upsellBody span { display: block; margin-top: 1px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
 .upsellAction { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 8px 14px; border-radius: 999px; background: var(--green); color: #fff; font-size: 13.5px; font-weight: 700; }
 
+/* verification status screens */
+.verifyStatus { display: grid; justify-items: center; gap: 10px; padding: 8px 0 4px; text-align: center; }
+.verifyStatus h2 { margin: 0; font-size: 22px; }
+.verifyStatus p { max-width: 42ch; margin: 0; }
+.verifyStatus .stepper { width: 100%; margin: 10px 0 2px; }
+.verifyStatusIcon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: var(--amber-bg); color: var(--amber); }
+.verifyStatus.ok .verifyStatusIcon { background: var(--mint); color: var(--green-deep); }
+.statusActions { display: grid; gap: 10px; width: 100%; margin-top: 16px; }
+.statusChecked { text-align: center; }
+.panel > .stepper { margin: 0 0 16px; }
+.panel > .statusActions { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.btn.full { white-space: normal; line-height: 1.25; text-align: center; }
+.lockedNote { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--line-soft); color: var(--ink-2); font-size: 14px; line-height: 1.5; text-align: left; }
+.lockedNote svg { flex: none; margin-top: 3px; color: var(--muted); }
+
 /* grid containers must not grow past their parent when children have wide content */
 .stack, .txBody, .txSection, .arrangeForm, .reviewBox, .reqMain, .ownerTools, .saleBuyerPicker, .sellerCard, .strip, .disputeCard, .metric, .productActions, .housingPayment { grid-template-columns: minmax(0, 1fr); }
 .stack { max-width: 880px; }
 .disputeNotice b { text-transform: none; }
 .arrangeForm .segmented button { padding: 0 8px; font-size: 14px; white-space: nowrap; }
+
+/* tablets: keep the product photo a sensible size instead of stretching edge to edge */
+@media (min-width: 641px) and (max-width: 850px) {
+  .productGallery, .productInfo { width: 100%; max-width: 560px; margin-inline: auto; }
+  .productImage { max-width: 560px; border-radius: 24px; }
+}
 
 /* 17 · Responsive ------------------------------------------------------------ */
 @media (max-width: 1020px) {
@@ -1437,13 +1463,12 @@ body:has(.sheetOverlay) .supportFab { display: none; }
   .hubHeroBody { padding: 0 20px 22px; }
   .hubActions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
   .hubActions .btn.danger { grid-column: 1 / -1; }
-  .hubGrid { grid-template-columns: 1fr; }
   .heroCardInner { flex-direction: column; align-items: flex-start; gap: 16px; padding: 24px 20px; }
   .heroCard .btn { width: 100%; }
   .heroCard { border-radius: 22px; }
   .stripRow { grid-template-columns: 1fr; }
   .disputeCard { padding: 16px; }
-  .manageGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .grid.manageGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 }
 
 @media (max-width: 640px) {
@@ -1454,7 +1479,8 @@ body:has(.sheetOverlay) .supportFab { display: none; }
   .statLabel { font-size: 12px; }
   .statHint { display: none; }
   .tabs { width: 100%; gap: 2px; }
-  .tab { flex: 1 0 auto; justify-content: center; gap: 6px; padding: 0 10px; font-size: 13.5px; }
+  .tab { flex: 1 0 auto; justify-content: center; gap: 5px; padding: 0 8px; font-size: 13px; }
+  .tabCount { min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; }
   .reqCard { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
   .dateBlock { flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 7px; width: auto; padding: 8px 13px; align-self: start; justify-self: start; border-radius: 12px; }
   .dateBlock b { font-size: 20px; }
@@ -1465,7 +1491,6 @@ body:has(.sheetOverlay) .supportFab { display: none; }
   .txHead { padding: 16px; }
   .txBody { padding: 0 16px 16px; }
   .txSection { padding: 14px; }
-  .txHead { flex-wrap: wrap; }
   .txHead .pill { margin-left: 62px; }
   .stepper li { font-size: 11.5px; }
   .txConfirmBar .actionsRow { width: 100%; }
@@ -1486,12 +1511,29 @@ body:has(.sheetOverlay) .supportFab { display: none; }
   .inlineEdit { grid-template-columns: 1fr; }
   .inlineEdit .btn { width: 100%; }
   .disputeActions { grid-template-columns: 1fr; }
-  .manageGrid { grid-template-columns: 1fr; }
+  .grid.manageGrid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .manageCard { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: stretch; }
+  .manageCard .pic { height: 100%; min-height: 112px; aspect-ratio: auto; }
+  .manageCard .priceTag { left: 6px; bottom: 6px; padding: 4px 8px; font-size: 11.5px; border-radius: 8px; }
+  .manageCard .picSave { display: none; }
+  .manageCard .cardbody { padding: 12px; }
+  .manageCard .cardbody h3 { font-size: 15px; }
+  .manageCard .cardActions { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .manageCard .cardActions .btn { min-height: 40px; padding: 0 8px; font-size: 13.5px; }
+  .manageCard .cardActions .btn:last-child { grid-column: 1 / -1; }
+  .manageCard .saleBuyerPicker { grid-column: 1 / -1; margin: 0 12px 12px; }
   .quickChips { margin-top: -16px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
+  .hubGrid { grid-template-columns: minmax(0, 1fr); }
   .upsellCard { flex-wrap: wrap; }
   .upsellBody { flex-basis: calc(100% - 70px); }
   .upsellAction { margin-left: 60px; }
   .lockCard { padding: 28px 20px; border-radius: 22px; }
+}
+
+@media (max-width: 400px) {
+  .manageCard .cardActions { grid-template-columns: minmax(0, 1fr); }
+  .manageCard .cardActions .btn:last-child { grid-column: auto; }
 }
 
 @media (max-width: 380px) {

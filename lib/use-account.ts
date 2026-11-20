@@ -14,6 +14,8 @@ export type MyAccount = {
   accountType: AccountType | null;
   businessName: string;
   businessCategory: string;
+  /** True once verification has been paid for (or waived). The account type can no longer be switched. */
+  typeLocked: boolean;
   isVendor: boolean;
   isStudent: boolean;
   refresh: () => Promise<void>;
@@ -21,19 +23,22 @@ export type MyAccount = {
 
 /** The signed-in user's account type. Re-reads automatically after a switch in Settings. */
 export function useMyAccount(): MyAccount {
-  const [state, setState] = useState({ loading: true, signedIn: false, userId: '', accountType: null as AccountType | null, businessName: '', businessCategory: '' });
+  const [state, setState] = useState({ loading: true, signedIn: false, userId: '', accountType: null as AccountType | null, businessName: '', businessCategory: '', typeLocked: false });
 
   const refresh = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setState({ loading: false, signedIn: false, userId: '', accountType: null, businessName: '', businessCategory: '' }); return; }
+    if (!user) { setState({ loading: false, signedIn: false, userId: '', accountType: null, businessName: '', businessCategory: '', typeLocked: false }); return; }
     const { data, error } = await supabase.from('profiles').select('account_type,business_name,business_category').eq('id', user.id).maybeSingle();
     if (error) {
       if (!isMissingAccountSchema(error)) console.warn('CARTOMUX: could not read the account type', error.message);
-      setState({ loading: false, signedIn: true, userId: user.id, accountType: null, businessName: '', businessCategory: '' });
+      setState({ loading: false, signedIn: true, userId: user.id, accountType: null, businessName: '', businessCategory: '', typeLocked: false });
       return;
     }
-    setState({ loading: false, signedIn: true, userId: user.id, accountType: normaliseAccountType(data?.account_type), businessName: data?.business_name || '', businessCategory: data?.business_category || '' });
+    // Best effort: the database enforces the lock either way; this only lets the screens explain it.
+    const { data: verification } = await supabase.from('student_verifications').select('payment_status').eq('user_id', user.id).maybeSingle();
+    const typeLocked = ['paid', 'waived'].includes(verification?.payment_status);
+    setState({ loading: false, signedIn: true, userId: user.id, accountType: normaliseAccountType(data?.account_type), businessName: data?.business_name || '', businessCategory: data?.business_category || '', typeLocked });
   }, []);
 
   useEffect(() => {

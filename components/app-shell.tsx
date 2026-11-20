@@ -74,7 +74,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       const [{ data }, { data: verification }] = await Promise.all([
         supabase.from('profiles').select('id,full_name,campus,avatar_url,role').eq('id', currentUser.id).maybeSingle(),
-        supabase.from('student_verifications').select('user_id').eq('user_id', currentUser.id).eq('status', 'approved').maybeSingle(),
+        supabase.from('student_verifications').select('user_id').eq('user_id', currentUser.id).eq('status', 'approved').in('payment_status', ['paid', 'waived']).maybeSingle(),
       ]);
       if (!mounted || sequence !== loadSequence) return;
       if (mounted) { setProfile(data || null); setVerified(!!verification); }
@@ -96,7 +96,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       verificationChannel = supabase.channel(`app-verification-${currentUser.id}-${channelSuffix}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'student_verifications', filter: `user_id=eq.${currentUser.id}` }, async () => {
-          const { data: fresh } = await supabase.from('student_verifications').select('user_id').eq('user_id', currentUser.id).eq('status', 'approved').maybeSingle();
+          const { data: fresh } = await supabase.from('student_verifications').select('user_id').eq('user_id', currentUser.id).eq('status', 'approved').in('payment_status', ['paid', 'waived']).maybeSingle();
           if (mounted) setVerified(!!fresh);
         })
         .subscribe();

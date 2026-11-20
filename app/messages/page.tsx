@@ -54,7 +54,8 @@ export default function Messages() {
             .from('student_verifications')
             .select('user_id')
             .in('user_id', otherIds)
-            .eq('status', 'approved');
+            .eq('status', 'approved')
+            .in('payment_status', ['paid', 'waived']);
 
           if (verificationError) {
             console.warn('CARTOMUX messages: verification lookup failed', verificationError.message);

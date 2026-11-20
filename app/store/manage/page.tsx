@@ -43,7 +43,7 @@ export default function ManageStore() {
     setBusy(false);
   }
   const shownSlug = slug.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'your-store';
-  if (!account.loading && !canUse('storefront', account.accountType)) return <main className="section"><BackButton /><div className="container"><VendorOnlyGate feature="storefront" icon={<Store size={26} />} /></div></main>;
+  if (!account.loading && !canUse('storefront', account.accountType)) return <main className="section"><BackButton /><div className="container"><VendorOnlyGate feature="storefront" icon={<Store size={26} />} locked={account.typeLocked} /></div></main>;
   return <main className="section"><BackButton /><div className="container"><div className="manageLayout">
     <div className="formCard">
       <span className="eyebrow">VENDOR STOREFRONT</span>

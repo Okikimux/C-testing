@@ -23,7 +23,7 @@ export default function Profile(){
     (async()=>{
       const {data:{user}}=await s.auth.getUser(); if(!user){window.location.assign('/auth/login');return}
       const load=async()=>{
-        const [{data:p},{count:c},{data:v}]=await Promise.all([s.from('profiles').select('id,full_name,campus,location,avatar_url').eq('id',user.id).single(),s.from('listings').select('id',{count:'exact',head:true}).eq('seller_id',user.id).neq('status','hidden'),s.from('student_verifications').select('user_id').eq('user_id',user.id).eq('status','approved').maybeSingle()]);
+        const [{data:p},{count:c},{data:v}]=await Promise.all([s.from('profiles').select('id,full_name,campus,location,avatar_url').eq('id',user.id).single(),s.from('listings').select('id',{count:'exact',head:true}).eq('seller_id',user.id).neq('status','hidden'),s.from('student_verifications').select('user_id').eq('user_id',user.id).eq('status','approved').in('payment_status',['paid','waived']).maybeSingle()]);
         if(mounted){setProfile(p);setCount(c||0);setVerified(!!v)}
       };
       await load();
@@ -58,7 +58,7 @@ export default function Profile(){
       {canUse('storefront',account.accountType)&&<Tile href="/store/manage" icon={<Store size={22}/>} title="My storefront" text="Create a shareable vendor shop"/>}
     </div></section>}
 
-    {account.isStudent&&<Link href="/settings#account-type" className="upsellCard"><span className="upsellIcon"><Store size={22}/></span><span className="upsellBody"><b>Selling as a business?</b><span>Switch to a vendor account to unlock a storefront and seller analytics.</span></span><span className="upsellAction"><ArrowLeftRight size={16}/> Switch</span></Link>}
+    {account.isStudent&&!account.typeLocked&&<Link href="/settings#account-type" className="upsellCard"><span className="upsellIcon"><Store size={22}/></span><span className="upsellBody"><b>Selling as a business?</b><span>Switch to a vendor account to unlock a storefront and seller analytics.</span></span><span className="upsellAction"><ArrowLeftRight size={16}/> Switch</span></Link>}
 
     <section className="hubGroup" aria-labelledby="hub-campus"><div className="hubGroupHead"><h2 id="hub-campus">Campus services</h2></div><div className="hubGrid">
       <Tile href="/viewing-requests" icon={<CalendarDays size={22}/>} title="Accommodation viewings" text="Manage inspection requests"/>

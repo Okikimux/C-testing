@@ -4,7 +4,7 @@ import { friendlyError } from '../../lib/friendly-error';
 import { useFlash } from '../../components/toast';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeftRight, Check, ImagePlus, Save, UserRound, ShieldCheck } from 'lucide-react';
+import { ArrowLeftRight, Check, ImagePlus, Lock, Save, UserRound, ShieldCheck } from 'lucide-react';
 import { createClient } from '../../lib/supabase';
 import { Avatar } from '../../components/avatar';
 import PushNotifications from '../../components/push-notifications';
@@ -110,7 +110,7 @@ export default function Settings() {
     finally { setUploading(false); }
   }
 
-  return <main className="section"><BackButton /><div className="container settingsLayout">
+  return <main className="section"><div className="container settingsLayout"><BackButton />
     <div><div className="eyebrow">Account</div><h1>Settings</h1><p className="muted">Manage your profile and private contact details.</p></div>
     <div className="panel settingsCard">
       <div className="settingsAvatarRow">
@@ -128,7 +128,8 @@ export default function Settings() {
     </div>
     <div className="panel accountTypePanel" id="account-type">
       <div className="accountTypeHead"><div><h3>Account type</h3><p className="muted">{account.accountType ? ACCOUNT_TYPES[account.accountType].tagline : 'Your account type appears here.'}</p></div>{account.accountType && <AccountBadge type={account.accountType} />}</div>
-      {account.accountType && <button type="button" className="btn light" onClick={() => setSwitching(true)}><ArrowLeftRight size={17}/> Switch to {account.accountType === 'vendor' ? 'a student' : 'a vendor'} account</button>}
+      {account.accountType && account.typeLocked && <p className="lockedNote"><Lock size={15} /> Your account type is locked because your verification payment has been confirmed. Contact CARTOMUX support if you need a change.</p>}
+      {account.accountType && !account.typeLocked && <button type="button" className="btn light" onClick={() => setSwitching(true)}><ArrowLeftRight size={17}/> Switch to {account.accountType === 'vendor' ? 'a student' : 'a vendor'} account</button>}
       {!account.loading && !account.accountType && <p className="muted">Account types are not available yet. Ask the CARTOMUX team to apply the latest database update.</p>}
     </div>
     {switching && account.accountType && <SwitchAccountSheet current={account.accountType} initialBusinessName={businessName} initialCategory={businessCategory} onClose={() => setSwitching(false)} onDone={(next, details) => { setSwitching(false); setBusinessName(details.businessName); setBusinessCategory(details.businessCategory); setMessage(next === 'vendor' ? 'You now have a vendor account. Your storefront and analytics are unlocked.' : 'You now have a student account.'); account.refresh(); }} />}

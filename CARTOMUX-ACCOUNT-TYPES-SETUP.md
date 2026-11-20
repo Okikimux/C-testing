@@ -1,7 +1,7 @@
 # Student & Vendor accounts – setup
 
 ## 1. Run the database update first
-Open Supabase → SQL Editor → run `supabase/cartomux-account-types.sql` (safe to run twice), **then** deploy the app.
+Open Supabase → SQL Editor → run `supabase/cartomux-account-types.sql` (safe to run again; if you ran an earlier version, run it again to get the lock rule below), **then** deploy the app.
 
 It adds `profiles.account_type` ('student' | 'vendor'), `business_name`, `business_category`, a guarded
 `set_account_type()` function, and makes storefronts vendor-only at database level (RLS).
@@ -30,3 +30,21 @@ Storefront write access is also enforced in the database (see section 5 of the S
 
 ## 4. Google sign-up
 The type chosen on the register page is carried through Google sign-in to the "Complete your profile" page, where it can still be changed and is saved.
+
+## 5. Account type lock
+Once a verification payment is confirmed (`payment_status` = `paid` or `waived`) the account type can no longer be switched.
+It unlocks again if that payment is refunded. The rule lives in `set_account_type()`, so it cannot be bypassed from the browser.
+Settings, Profile and the locked storefront/analytics pages explain the lock instead of showing a Switch button.
+
+Support can still change a type manually in the SQL editor:
+```sql
+update public.profiles set account_type = 'vendor', business_name = 'Shop name' where id = '<user id>';
+```
+
+## 6. Verification screens
+- After stage 1 is submitted the application details and fee panel disappear. The user sees an "Application received" card with a progress tracker (Submitted, Admin review, Payment, Verified) and buttons: Refresh status, Back to home, Go to profile. The page also updates by itself.
+- "One step left" (stage 1 approved) keeps the payment and coupon options and adds the same buttons.
+- A rejected application shows the reason and the form again. The NIN is no longer pre-filled from the saved application.
+
+## 7. Verified badge
+The badge shows only when the application is approved AND payment is confirmed or waived (`lib/verified.ts`, app shell, profile, messages). Stage 1 approval, pending and rejected never show it.

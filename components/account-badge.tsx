@@ -12,7 +12,7 @@ export function AccountBadge({ type, className = '' }: { type: AccountType | nul
 }
 
 /** Shown instead of a vendor-only page when a student opens it. The route itself is unchanged. */
-export function VendorOnlyGate({ feature, icon }: { feature: Feature; icon?: ReactNode }) {
+export function VendorOnlyGate({ feature, icon, locked = false }: { feature: Feature; icon?: ReactNode; locked?: boolean }) {
   const copy = VENDOR_FEATURE_COPY[feature];
   return (
     <div className="lockCard">
@@ -24,7 +24,9 @@ export function VendorOnlyGate({ feature, icon }: { feature: Feature; icon?: Rea
         {ACCOUNT_TYPES.vendor.points.map(point => <li key={point}>{point}</li>)}
       </ul>
       <div className="lockActions">
-        <Link href="/settings#account-type" className="btn green"><Store size={17} /> Switch to a vendor account</Link>
+        {locked
+          ? <p className="lockedNote"><Lock size={15} /> Your account type is locked because your verification payment has been confirmed. Contact CARTOMUX support if you need a change.</p>
+          : <Link href="/settings#account-type" className="btn green"><Store size={17} /> Switch to a vendor account</Link>}
         <Link href="/profile" className="btn light">Back to profile</Link>
       </div>
     </div>

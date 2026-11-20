@@ -22,3 +22,14 @@ Status tabs on transactions and requests, loading skeletons, delivery stepper, l
 
 ## Student & Vendor accounts
 See `CARTOMUX-ACCOUNT-TYPES-SETUP.md`. Run `supabase/cartomux-account-types.sql` before deploying.
+
+## Layout audit (all 37 pages)
+Every page was rendered inside the real app shell with sample data (including very long names, titles and emails) at 360, 390, 768 and 1280 px and measured for horizontal overflow, clipped text and small tap targets. Fixed:
+- Very long unbroken words in product titles, prices, card titles, emails now wrap instead of stretching the page.
+- Home hero search "Explore" button and the hero cards no longer run off the right edge on phones.
+- Transactions card header no longer squeezes the item title into a thin column when the status pill fits beside it.
+- My listings is a compact horizontal row on phones (was one huge square card per listing); 3 columns on tablets.
+- Footer links, Back links, text links, carousel dots, summary toggles and toast close buttons have larger tap areas (about 36-40px) without changing how they look.
+- Status tabs fit four tabs on a phone; settings Back link lines up with its card.
+- Tablets: listing grids use 3 columns, the product photo is capped and centred, profile tiles use 2 columns.
+Result: 0 horizontal overflow, 0 clipped text and no undersized tap targets across all pages and widths.
